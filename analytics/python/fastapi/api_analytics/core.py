@@ -5,7 +5,7 @@ from typing import Dict, List, Union
 
 import requests
 
-DEFAULT_SERVER_URL = "https://www.apianalytics-server.com"
+DEFAULT_SERVER_URL = "https://analytics.coolify.interpreto.se"
 
 _requests = []
 _last_posted = datetime.now()

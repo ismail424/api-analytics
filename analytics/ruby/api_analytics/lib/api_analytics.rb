@@ -68,7 +68,7 @@ module Analytics
   Config = Struct.new(:privacy_level, :server_url, :get_path, :get_ip_address, :get_hostname, :get_user_agent, :get_user_id) do
     def initialize(
       privacy_level = 0, 
-      server_url = 'https://www.apianalytics-server.com', 
+      server_url = 'https://analytics.coolify.interpreto.se', 
       get_path = ->(env) { env['REQUEST_PATH'] }, 
       get_ip_address = ->(env) { env['REMOTE_ADDR'] }, 
       get_hostname = ->(env) { env['HTTP_HOST'] }, 

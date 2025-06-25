@@ -1,6 +1,6 @@
 import { shuffleList } from "./shuffle";
 
-export const serverURL = 'https://www.apianalytics-server.com';
+export const serverURL = 'https://analytics.coolify.interpreto.se';
 
 export const pageSize = 200_000;
 
