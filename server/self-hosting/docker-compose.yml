@@ -20,8 +20,6 @@ services:
     build:
       context: ../api
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -38,8 +36,6 @@ services:
     build:
       context: ../logger
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
