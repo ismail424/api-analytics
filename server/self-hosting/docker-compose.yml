@@ -27,7 +27,7 @@ services:
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ./database/schema.sql:/schema.sql
+      - ./database:/database
     command: >
       bash -c "
         set -e
@@ -39,15 +39,25 @@ services:
         # Wait a bit more for database to be fully ready
         sleep 2
         
+        echo 'Checking if schema file exists...'
+        if [ ! -f /database/schema.sql ]; then
+          echo 'ERROR: Schema file not found at /database/schema.sql'
+          exit 1
+        fi
+        echo 'Schema file found.'
+        
         echo 'Checking if tables exist...'
         RESULT=$$(psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -t -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='users' AND table_schema='public';\" 2>/dev/null | tr -d ' ')
         echo \"Found $$RESULT tables named 'users'\"
         
         if [ \"$$RESULT\" = \"0\" ]; then
           echo 'No users table found. Applying schema...'
-          psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -f /schema.sql
+          psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -f /database/schema.sql
           if [ $$? -eq 0 ]; then
             echo 'Schema applied successfully!'
+            # Verify the table was created
+            VERIFY=$$(psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -t -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='users' AND table_schema='public';\" | tr -d ' ')
+            echo \"Verification: Found $$VERIFY users tables after schema application\"
           else
             echo 'Failed to apply schema!'
             exit 1
