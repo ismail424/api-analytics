@@ -9,66 +9,11 @@ services:
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     expose:
       - 5432
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USERNAME}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  db-init:
-    image: postgres:17
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./database:/database
-    command: >
-      bash -c "
-        set -e
-        echo 'Starting database initialization check...'
-        echo 'Database host: db'
-        echo 'Database name: ${POSTGRES_DB}'
-        echo 'Database user: ${POSTGRES_USERNAME}'
-        
-        # Wait a bit more for database to be fully ready
-        sleep 2
-        
-        echo 'Checking if schema file exists...'
-        if [ ! -f /database/schema.sql ]; then
-          echo 'ERROR: Schema file not found at /database/schema.sql'
-          exit 1
-        fi
-        echo 'Schema file found.'
-        
-        echo 'Checking if tables exist...'
-        RESULT=$$(psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -t -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='users' AND table_schema='public';\" 2>/dev/null | tr -d ' ')
-        echo \"Found $$RESULT tables named 'users'\"
-        
-        if [ \"$$RESULT\" = \"0\" ]; then
-          echo 'No users table found. Applying schema...'
-          psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -f /database/schema.sql
-          if [ $$? -eq 0 ]; then
-            echo 'Schema applied successfully!'
-            # Verify the table was created
-            VERIFY=$$(psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -t -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='users' AND table_schema='public';\" | tr -d ' ')
-            echo \"Verification: Found $$VERIFY users tables after schema application\"
-          else
-            echo 'Failed to apply schema!'
-            exit 1
-          fi
-        else
-          echo 'Users table already exists. Skipping schema application.'
-        fi
-        
-        echo 'Database initialization complete.'
-      "
-    restart: "no"
 
   api:
     container_name: api
@@ -80,18 +25,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      db-init:
-        condition: service_completed_successfully
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      NODE_ENV: production
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://0.0.0.0:3000/api/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
-    restart: always
 
   logger:
     container_name: logger
@@ -99,21 +39,17 @@ services:
       context: ../logger
       dockerfile: Dockerfile
     ports:
-      - "8069:8000"
+      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
-      db-init:
-        condition: service_completed_successfully
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://0.0.0.0:8000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-    restart: always
-
   monitor:
     container_name: monitor
     build:
@@ -125,7 +61,6 @@ services:
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     command: /bin/bash -c "printenv > /etc/environment && tail -f /dev/null"
-    restart: always
 
 volumes:
   db-data:
