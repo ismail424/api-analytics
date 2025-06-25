@@ -19,6 +19,47 @@ services:
       timeout: 5s
       retries: 5
 
+  db-init:
+    image: postgres:17
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./database/schema.sql:/schema.sql
+    command: >
+      bash -c "
+        set -e
+        echo 'Starting database initialization check...'
+        echo 'Database host: db'
+        echo 'Database name: ${POSTGRES_DB}'
+        echo 'Database user: ${POSTGRES_USERNAME}'
+        
+        # Wait a bit more for database to be fully ready
+        sleep 2
+        
+        echo 'Checking if tables exist...'
+        RESULT=$$(psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -t -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='users' AND table_schema='public';\" 2>/dev/null | tr -d ' ')
+        echo \"Found $$RESULT tables named 'users'\"
+        
+        if [ \"$$RESULT\" = \"0\" ]; then
+          echo 'No users table found. Applying schema...'
+          psql -h db -U ${POSTGRES_USERNAME} -d ${POSTGRES_DB} -f /schema.sql
+          if [ $$? -eq 0 ]; then
+            echo 'Schema applied successfully!'
+          else
+            echo 'Failed to apply schema!'
+            exit 1
+          fi
+        else
+          echo 'Users table already exists. Skipping schema application.'
+        fi
+        
+        echo 'Database initialization complete.'
+      "
+    restart: "no"
+
   api:
     container_name: api
     build:
@@ -29,6 +70,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       NODE_ENV: production
@@ -50,6 +93,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     healthcheck:
