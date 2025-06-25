@@ -65,7 +65,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             privacy_level: 0,
-            server_url: String::from("https://www.apianalytics-server.com/"),
+            server_url: String::from("https://analytics.coolify.interpreto.se/"),
             get_hostname: Box::new(get_hostname),
             get_ip_address: Box::new(get_ip_address),
             get_path: Box::new(get_path),

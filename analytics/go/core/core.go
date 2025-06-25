@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const DefaultServerURL string = "https://www.apianalytics-server.com/"
+const DefaultServerURL string = "https://analytics.coolify.interpreto.se/"
 
 type Client struct {
 	apiKey       string

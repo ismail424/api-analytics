@@ -25,7 +25,7 @@ export class Config {
 		 * @type {string}
 		 * @public
 		 */
-		this.serverUrl = "https://www.apianalytics-server.com/";
+		this.serverUrl = "https://analytics.coolify.interpreto.se/";
 
 		/**
 		 * A mapping function that takes a request and returns the path

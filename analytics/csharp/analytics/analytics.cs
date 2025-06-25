@@ -25,7 +25,7 @@ public class Analytics(RequestDelegate next, string apiKey, Config? config = nul
     private readonly Config _config = config ?? new Config();
     private DateTime _lastPosted = DateTime.Now;
     private List<RequestData> _requests = [];
-    private readonly string _url = "https://www.apianalytics-server.com/api/log-request";
+    private readonly string _url = "https://analytics.coolify.interpreto.se/api/log-request";
 
     private struct Payload
     {

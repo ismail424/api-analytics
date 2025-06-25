@@ -75,7 +75,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             privacy_level: 0,
-            server_url: "https://www.apianalytics-server.com/".to_string(),
+            server_url: "https://analytics.coolify.interpreto.se/".to_string(),
             get_hostname: Arc::new(get_hostname),
             get_ip_address: Arc::new(get_ip_address),
             get_path: Arc::new(get_path),
